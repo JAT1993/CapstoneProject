@@ -13,7 +13,7 @@ client = AzureOpenAI(
 )
 
 # Dataset as a CSV-like string
-csv_path=r'C:\Users\jatin_arora\PycharmProjects\Langchain\1-Langchain\manufacturing_production_data.csv'
+csv_path='src/manufacturing_production_data.csv'
 
 # Step 2: Load the dataset into a Pandas DataFrame
 def load_dataset(data):

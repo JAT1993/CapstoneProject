@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-csv_path=r'C:\Users\jatin_arora\PycharmProjects\CapstoneProject\src\manufacturing_production_data.csv'
+csv_path='src/manufacturing_production_data.csv'
 
 # Step 1: Load the data into a Pandas DataFrame
 def load_data(data_source: str):
@@ -93,7 +93,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Dataset as a CSV-like string
-csv_path=r'C:\Users\jatin_arora\PycharmProjects\Langchain\1-Langchain\manufacturing_production_data.csv'
+csv_path='src/manufacturing_production_data.csv'
 
 # Step 1: Load the dataset
 def load_dataset(data):

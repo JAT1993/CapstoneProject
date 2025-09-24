@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Dataset as a CSV-like string
-csv_path=r'C:\Users\jatin_arora\PycharmProjects\CapstoneProject\src\manufacturing_production_data.csv'
+csv_path='src/manufacturing_production_data.csv'
 # Step 1: Load the dataset
 def load_dataset(data):
     """Load dataset into DataFrame and preprocess."""

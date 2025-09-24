@@ -14,7 +14,7 @@ API_KEY=st.secrets['DIAL_ACCESS_TOKEN']
 
 
 # Dataset as a CSV-like string
-csv_path=r'C:\Users\jatin_arora\PycharmProjects\Langchain\1-Langchain\manufacturing_production_data.csv'
+csv_path='src/manufacturing_production_data.csv'
 client = AzureOpenAI(
     api_key=API_KEY,
     azure_endpoint="https://ai-proxy.lab.epam.com",
