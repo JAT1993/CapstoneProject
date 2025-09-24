@@ -1,5 +1,5 @@
 import streamlit as st
-from agent_core import create_agent
+import agent_core
 
 
 # --- Streamlit Configuration ---
@@ -15,7 +15,7 @@ if not api_key:
     st.stop()
 
 # --- Initialize LLM Agent ---
-agent = create_agent(api_key)
+agent = agent_core.create_agent(api_key)
 
 st.title("Interactive LLM Tool")
 st.write("Ask questions related to the dataset or request actionable insights!")
