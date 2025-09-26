@@ -107,13 +107,13 @@ agent = create_agent(tools)
 # Step 6: Run the Agent with Prompts
 print("\n### Running Agent ###")
 query_1 = "What's the output quantity per shift?"
-response_1 = agent.run(query_1)
+response_1 = agent.invoke(query_1)
 print(f"\nAgent Response for query1:\n{response_1}")
 
 query_2 = "What are the sensor readings?"
-response_2 = agent.run(query_2)
+response_2 = agent.invoke(query_2)
 print(f"\nAgent Response for query2:\n{response_2}")
 
 query_3 = "Can you generate insights for reducing defects based on the data?"
-response_3 = agent.run(query_3)
+response_3 = agent.invoke(query_3)
 print(f"\nAgent Response for query3:\n{response_3}")
