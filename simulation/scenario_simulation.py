@@ -1,85 +1,94 @@
 import pandas as pd
-import matplotlib.pyplot as plt
+from langchain.tools import tool
 
-# Dataset as a CSV-like string
-csv_path='src/manufacturing_production_data.csv'
-# Step 1: Load the dataset
-def load_dataset(data):
-    """Load dataset into DataFrame and preprocess."""
-    df = pd.read_csv(data, parse_dates=["timestamp"])
-    return df
+file_path='data/preprocessed_data.csv'
+# file_path=r'C:\Users\jatin_arora\PycharmProjects\CapstoneProject\data\preprocessed_data.csv'
 
-df = load_dataset(csv_path)
+# --- Tool 1: Load Dataset ---
+@tool
+def load_dataset(file_path: str) -> pd.DataFrame:
+    """
+    Load dataset into a Pandas DataFrame and preprocess timestamps.
+    Inputs:
+    - file_path: Path to the CSV file.
 
-# Step 2: Define Production Scenario Simulation
-def simulate_production(df, production_rate_adjustment, max_temp_threshold, testing_defect_adjustment, shift_to_simulate):
+    Outputs:
+    - DataFrame containing the loaded dataset.
+    """
+    try:
+        df = pd.read_csv(file_path, parse_dates=["timestamp"])
+        print("Dataset loaded successfully!")
+        return df
+    except Exception as e:
+        raise ValueError(f"Error loading dataset: {str(e)}")
+
+
+# --- Tool 2: Simulate Production Adjustment ---
+@tool
+def simulate_production(
+        df: pd.DataFrame,
+        production_rate_adjustment: float = 0.0,
+        max_temp_threshold: float = 80.0,
+        testing_defect_adjustment: float = 0.0,
+        shift_to_simulate: int = None,
+        apply_maintenance_downtime: bool = False,
+        maintenance_downtime_shift: int = 2
+) -> dict:
     """
     Simulates different production scenarios based on:
       - Adjusting production rates.
-      - Setting a temperature failure threshold.
-      - Adjusting defect rates for the testing stage.
-      - Simulating impact on a specific shift's output.
+      - Simulating high-temperature sensor failures and reducing output.
+      - Adding defect rate adjustments in the "testing" stage.
+      - Simulating maintenance downtime on specific shifts.
+      - Option to focus on a specific shift's impact.
+
+    Inputs:
+    - df (DataFrame): Original production dataset.
+    - production_rate_adjustment (float): Production rate adjustment multiplier (+ve or -ve).
+    - max_temp_threshold (float): High-temperature threshold to trigger output reduction.
+    - testing_defect_adjustment (float): Adjustment factor for defect rates in the "testing" stage.
+    - shift_to_simulate (int, optional): Shift number to analyze separately.
+    - apply_maintenance_downtime (bool): If True, simulate downtime for a specific shift.
+    - maintenance_downtime_shift (int): Shift affected by maintenance downtime.
+
+    Outputs:
+    - Dictionary with two keys:
+      - 'simulated_df': Full dataset with simulations applied.
+      - 'specific_shift_sim': Shift-specific results with applied simulations.
     """
     df_sim = df.copy()
 
-    # Scenario 1: Adjust production rate across all shifts (output_qty + adjustment)
+    # --- Scenario 1: Adjust Production Rates ---
     df_sim['output_qty_simulated'] = df_sim['output_qty'] * (1 + production_rate_adjustment)
+    print(f"Simulation: Adjusted production rate by {production_rate_adjustment * 100:.1f}%")
 
-    # Scenario 2: Simulate temperature failures where `sensor_1_temp` exceeds the threshold
+    # --- Scenario 2: Simulate Temperature Failures ---
     df_sim['temp_failure_flag'] = df_sim['sensor_1_temp'] > max_temp_threshold
-    df_sim.loc[df_sim['temp_failure_flag'], 'output_qty_simulated'] *= 0.8  # Reduce production by 20% on temp failure
+    df_sim.loc[df_sim['temp_failure_flag'], 'output_qty_simulated'] *= 0.8  # Reduce production by 20% on failure
+    temp_failures = df_sim['temp_failure_flag'].sum()
+    print(f"Simulation: Applied temperature failure threshold ({max_temp_threshold}) - {temp_failures} rows impacted.")
 
-    # Scenario 3: Adjust defect rate during the "testing" production stage
+    # --- Scenario 3: Adjust Defect Rates in Testing Stage ---
+    df_sim['defect_flag_simulated'] = df_sim['defect_flag']  # Carry original defect flag
     df_sim.loc[df_sim['production_stage'] == 'testing', 'defect_flag_simulated'] = (
-        df_sim['defect_flag'] + (df_sim['defect_flag'] * testing_defect_adjustment)
-    )
-    df_sim['defect_flag_simulated'] = df_sim['defect_flag_simulated'].fillna(0).astype(int)
+            df_sim['defect_flag'] * (1 + testing_defect_adjustment)
+    ).fillna(0).astype(int)
+    print(f"Simulation: Adjusted defect rates in 'testing' stage by {testing_defect_adjustment * 100:.1f}%")
 
-    # Scenario 4: Focus on a specific shift and simulate its impact
-    specific_shift_sim = df_sim[df_sim['shift'] == shift_to_simulate]
+    # --- Scenario 4: Maintenance Downtime (Optional) ---
+    if apply_maintenance_downtime:
+        # Apply maintenance downtime: Reduce output by 50% for the selected shift
+        df_sim.loc[df_sim['shift'] == maintenance_downtime_shift, 'output_qty_simulated'] *= 0.5
+        print(
+            f"Simulation: Applied maintenance downtime for shift {maintenance_downtime_shift} (50% output reduction).")
 
-    return df_sim, specific_shift_sim
+    # --- Scenario 5: Focus on a Specific Shift ---
+    specific_shift_sim = None
+    if shift_to_simulate is not None:
+        specific_shift_sim = df_sim[df_sim['shift'] == shift_to_simulate]
+        print(f"Simulation: Data filtered for shift {shift_to_simulate}.")
 
-# Run the simulation
-production_rate_adjustment = 0.1  # Increase production rate by 10%
-max_temp_threshold = 75          # Set a high-temperature threshold
-testing_defect_adjustment = 0.2  # Increase defect rate by 20% in testing stages
-shift_to_simulate = 1            # Focus on Shift 1
-
-simulated_df, shift_simulated_df = simulate_production(
-    df, production_rate_adjustment, max_temp_threshold, testing_defect_adjustment, shift_to_simulate
-)
-
-# Step 3: Analyze Results
-print("\n### SIMULATED DATA ###")
-print(simulated_df)
-
-print("\n### SIMULATED SHIFT SPECIFIC DATA ###")
-print(shift_simulated_df)
-
-# Step 4: Visualize the Simulation Results
-def visualize_simulation(df_sim):
-    """Visualize the Simulated Production Scenarios."""
-    # Original vs Simulated Output Quantity
-    plt.figure(figsize=(10, 6))
-    plt.plot(df_sim['timestamp'], df_sim['output_qty'], label='Original Output Qty', marker='o')
-    plt.plot(df_sim['timestamp'], df_sim['output_qty_simulated'], label='Simulated Output Qty', marker='x')
-    plt.title('Original vs Simulated Production Output')
-    plt.xlabel('Timestamp')
-    plt.ylabel('Output Quantity')
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-    # Defective Items in Testing Stage
-    plt.figure(figsize=(8, 5))
-    testing_stage = df_sim[df_sim['production_stage'] == 'testing']
-    plt.bar(testing_stage['shift'], testing_stage['defect_flag_simulated'], color='orange', alpha=0.7, label='Simulated Defective Items')
-    plt.title('Simulated Defective Items in Testing Stage (By Shift)')
-    plt.xlabel('Shift')
-    plt.ylabel('Defective Items')
-    plt.legend()
-    plt.show()
-
-# Visualize the results
-visualize_simulation(simulated_df)
+    return {
+        "simulated_df": df_sim,
+        "specific_shift_sim": specific_shift_sim
+    }
