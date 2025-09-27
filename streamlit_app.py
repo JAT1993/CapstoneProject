@@ -1,5 +1,6 @@
 import streamlit as st
-from src.agent.agent_core import ManufacturingAgent
+from src.agent.agent_core import ManufacturingAgent,tools
+from simulation.genai_interface import llm
 import pandas as pd
 import json
 from io import StringIO, BytesIO
@@ -38,8 +39,10 @@ st.markdown("---")
 # -----------------------------
 # Initialize Agent
 # -----------------------------
+memory_context_window = st.slider("Set Memory Context Window:", min_value=1, max_value=10, value=3)
 if "agent" not in st.session_state:
-    st.session_state.agent = ManufacturingAgent()
+    st.session_state.agent = ManufacturingAgent(
+        llm=llm, tools=tools, memory_context_window=memory_context_window)
 agent = st.session_state.agent
 
 # -----------------------------

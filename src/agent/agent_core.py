@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from src.anomaly_detection import quality_analysis,detect_anomalies_zscore,detect_anomalies_iqr
 from simulation.scenario_simulation import simulate_production
 from simulation.genai_interface import llm
-from memory import initialize_memory
+from src.agent.memory import initialize_memory
 
 
 # Load environment variables from .env (OpenAI API Key)
@@ -124,6 +124,7 @@ class ManufacturingAgent:
 if __name__ == "__main__":
 
     # 1. Create Manufacturing Agent
+
     manufacturing_agent = ManufacturingAgent(llm, tools=tools, memory_context_window=3)
 
     # 3. Provide queries to the agent
